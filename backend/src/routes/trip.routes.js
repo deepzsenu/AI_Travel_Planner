@@ -5,7 +5,10 @@ import {
   getUserTrips,
   getTripById,
   updateTrip,
-  deleteTrip
+  deleteTrip,
+  generateItinerary,
+  regenerateDay,
+  tripChat
 } from "../controllers/trip.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
@@ -21,5 +24,11 @@ router.get("/:id", protect, getTripById);
 router.put("/:id", protect, updateTrip);
 
 router.delete("/:id", protect, deleteTrip);
+
+router.post("/:id/generate-itinerary", protect, generateItinerary);
+
+router.post("/:id/regenerate-day", protect, regenerateDay);
+
+router.post("/:id/chat", protect, tripChat);
 
 export default router;

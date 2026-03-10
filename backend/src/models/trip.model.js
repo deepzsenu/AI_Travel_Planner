@@ -61,10 +61,34 @@ const tripSchema = new mongoose.Schema(
       food: Number,
       activities: Number,
       total: Number
-    }
+    },
+    chatHistory: [
+        {
+            role: {
+            type: String,
+            enum: ["user", "assistant"]
+            },
+            message: String,
+            createdAt: {
+            type: Date,
+            default: Date.now
+            }
+        }
+    ],
+    hotels: [
+        {
+            name: {
+            type: String
+            },
+            type: {
+            type: String
+            }
+        }
+    ]
   },
   { timestamps: true }
 );
+
 
 const Trip = mongoose.model("Trip", tripSchema);
 

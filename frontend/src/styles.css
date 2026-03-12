@@ -1,0 +1,24 @@
+body{
+font-family: Arial;
+background:#f4f4f4;
+}
+
+.trip-card{
+background:white;
+padding:20px;
+margin:10px;
+border-radius:8px;
+}
+
+.activity-card{
+background:white;
+padding:10px;
+margin:10px 0;
+border-radius:6px;
+}
+
+.chat-panel{
+background:white;
+padding:15px;
+margin-top:20px;
+}

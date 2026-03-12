@@ -1,57 +1,86 @@
 import Trip from "../models/trip.model.js";
-import { generateTravelPlan } from "../services/ai.service.js";
-import { regenerateTripDay } from "../services/ai.service.js";
-import { tripChatAssistant } from "../services/ai.service.js";
-/*
-CREATE TRIP
-*/
+import { generateTripPlan } from "../services/ai.service.js";
+import { safeJSONParse } from "../utils/safeJSONParse.js";
+import { regenerateDayPlan } from "../services/ai.service.js";
+import { chatWithTripAI } from "../services/ai.service.js";
+import { validateTripAIResponse } from "../utils/aiValidator.js";
+
+
+
+
+
+
+// CREATE TRIP + GENERATE AI PLAN
 export const createTrip = async (req, res) => {
+
   try {
 
-    const { destination, days, budgetType, interests } = req.body;
+    const userId = req.user.id;
 
-    const trip = await Trip.create({
-      user: req.user.id,
+    const { source, destination, days, budgetType, interests } = req.body;
+
+    const aiResponse = await generateTripPlan({
+      source,
       destination,
       days,
       budgetType,
       interests
     });
 
-    res.status(201).json(trip);
+    const parsed = safeJSONParse(aiResponse);
+
+    const validated = validateTripAIResponse(parsed);
+
+    const trip = await Trip.create({
+        user: userId,
+        source,
+        destination,
+        days,
+        budgetType,
+        interests,
+
+        itinerary: validated.itinerary,
+        estimatedBudget: validated.estimatedBudget,
+        hotels: validated.hotels
+      });
+
+    res.status(201).json({
+      message: "Trip generated successfully",
+      trip
+    });
 
   } catch (error) {
 
-    console.error(error);
-
     res.status(500).json({
-      message: "Server error"
+      message: error.message
     });
 
   }
 };
 
+
+
+// GET ALL USER TRIPS
 export const getUserTrips = async (req, res) => {
 
   try {
 
-    const trips = await Trip.find({
-      user: req.user.id
-    });
+    const userId = req.user.id;
+
+    const trips = await Trip.find({ user: userId }).sort({ createdAt: -1 });
 
     res.json(trips);
 
   } catch (error) {
 
-    res.status(500).json({
-      message: "Server error"
-    });
+    res.status(500).json({ message: error.message });
 
   }
-
 };
 
 
+
+// GET SINGLE TRIP
 export const getTripById = async (req, res) => {
 
   try {
@@ -62,54 +91,21 @@ export const getTripById = async (req, res) => {
     });
 
     if (!trip) {
-      return res.status(404).json({
-        message: "Trip not found"
-      });
+      return res.status(404).json({ message: "Trip not found" });
     }
 
     res.json(trip);
 
   } catch (error) {
 
-    res.status(500).json({
-      message: "Server error"
-    });
+    res.status(500).json({ message: error.message });
 
   }
-
 };
 
-export const updateTrip = async (req, res) => {
 
-  try {
 
-    const trip = await Trip.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        user: req.user.id
-      },
-      req.body,
-      { new: true }
-    );
-
-    if (!trip) {
-      return res.status(404).json({
-        message: "Trip not found"
-      });
-    }
-
-    res.json(trip);
-
-  } catch (error) {
-
-    res.status(500).json({
-      message: "Server error"
-    });
-
-  }
-
-};
-
+// DELETE TRIP
 export const deleteTrip = async (req, res) => {
 
   try {
@@ -120,9 +116,7 @@ export const deleteTrip = async (req, res) => {
     });
 
     if (!trip) {
-      return res.status(404).json({
-        message: "Trip not found"
-      });
+      return res.status(404).json({ message: "Trip not found" });
     }
 
     res.json({
@@ -131,180 +125,183 @@ export const deleteTrip = async (req, res) => {
 
   } catch (error) {
 
-    res.status(500).json({
-      message: "Server error"
-    });
+    res.status(500).json({ message: error.message });
 
   }
-
 };
 
-
-/*
-GENERATE AI ITINERARY
-*/
-
-export const generateItinerary = async (req, res) => {
-
+// ADD ACTIVITY
+export const addActivity = async (req, res) => {
   try {
 
+    const { tripId } = req.params;
+    const { day, title, description, time } = req.body;
+
     const trip = await Trip.findOne({
-      _id: req.params.id,
+      _id: tripId,
       user: req.user.id
     });
 
     if (!trip) {
-      return res.status(404).json({
-        message: "Trip not found"
-      });
+      return res.status(404).json({ message: "Trip not found" });
     }
 
-    const aiResult = await generateTravelPlan(trip);
+    const dayPlan = trip.itinerary.find(d => d.day === Number(day));
 
-    trip.itinerary = aiResult.itinerary;
-    trip.estimatedBudget = aiResult.estimatedBudget;
-    trip.hotels = aiResult.hotels;
+    if (!dayPlan) {
+      return res.status(404).json({ message: "Day not found" });
+    }
+
+    dayPlan.activities.push({
+      title,
+      description,
+      time
+    });
 
     await trip.save();
 
     res.json({
-      message: "Itinerary generated successfully",
-      trip
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      message: "AI generation failed"
-    });
-
-  }
-
-};
-
-export const regenerateDay = async (req, res) => {
-
-  try {
-
-    const { day, instruction } = req.body;
-
-    const trip = await Trip.findOne({
-      _id: req.params.id,
-      user: req.user.id
-    });
-
-    if (!trip) {
-      return res.status(404).json({
-        message: "Trip not found"
-      });
-    }
-
-    const updatedDay = await regenerateTripDay(trip, day, instruction);
-
-    trip.itinerary = trip.itinerary.map(d =>
-      d.day === day ? updatedDay : d
-    );
-
-    await trip.save();
-
-    res.json({
-      message: "Day regenerated successfully",
+      message: "Activity added",
       itinerary: trip.itinerary
     });
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      message: "AI regeneration failed"
-    });
+    res.status(500).json({ message: error.message });
 
   }
-
 };
 
-export const tripChat = async (req, res) => {
+// REMOVE ACTIVITY
+export const removeActivity = async (req, res) => {
 
   try {
 
-    const { question } = req.body;
+    const { tripId, activityId } = req.params;
 
     const trip = await Trip.findOne({
-      _id: req.params.id,
+      _id: tripId,
       user: req.user.id
     });
 
     if (!trip) {
-      return res.status(404).json({
-        message: "Trip not found"
-      });
+      return res.status(404).json({ message: "Trip not found" });
     }
 
-    const answer = await tripChatAssistant(trip, question);
-
-    // save conversation
-    trip.chatHistory.push({
-      role: "user",
-      message: question
-    });
-
-    trip.chatHistory.push({
-      role: "assistant",
-      message: answer
+    trip.itinerary.forEach(day => {
+      day.activities = day.activities.filter(
+        act => act._id.toString() !== activityId
+      );
     });
 
     await trip.save();
 
     res.json({
-      answer
+      message: "Activity removed",
+      itinerary: trip.itinerary
     });
 
   } catch (error) {
 
-    console.error(error);
-
-    res.status(500).json({
-      message: "Chat assistant failed"
-    });
+    res.status(500).json({ message: error.message });
 
   }
 
 };
 
-// export const tripChat = async (req, res) => {
 
-//   try {
+// REGENERATE DAY
+export const regenerateDay = async (req, res) => {
 
-//     const { question } = req.body;
+  try {
 
-//     const trip = await Trip.findOne({
-//       _id: req.params.id,
-//       user: req.user.id
-//     });
+    const { tripId } = req.params;
+    const { day } = req.body;
 
-//     if (!trip) {
-//       return res.status(404).json({
-//         message: "Trip not found"
-//       });
-//     }
+    const trip = await Trip.findOne({
+      _id: tripId,
+      user: req.user.id
+    });
 
-//     const answer = await tripChatAssistant(trip, question);
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
 
-//     res.json({
-//       answer
-//     });
+    const aiResponse = await regenerateDayPlan({
+      destination: trip.destination,
+      day,
+      interests: trip.interests
+    });
 
-//   } catch (error) {
+    const parsed = safeJSONParse(aiResponse);
 
-//     console.error(error);
+    trip.itinerary = trip.itinerary.map(d =>
+      d.day === Number(day) ? parsed : d
+    );
 
-//     res.status(500).json({
-//       message: "Chat assistant failed"
-//     });
+    await trip.save();
 
-//   }
+    res.json({
+      message: "Day regenerated",
+      itinerary: trip.itinerary
+    });
 
-// };
+  } catch (error) {
+
+    res.status(500).json({ message: error.message });
+
+  }
+};
+
+
+// CHAT WITH TRIP AI
+export const chatWithTrip = async (req, res) => {
+
+  try {
+
+    const { tripId } = req.params;
+    const { message } = req.body;
+
+    const trip = await Trip.findOne({
+      _id: tripId,
+      user: req.user.id
+    });
+
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    const aiResponse = await chatWithTripAI({
+      trip,
+      message
+    });
+
+    const parsed = safeJSONParse(aiResponse);
+
+    trip.itinerary = parsed.itinerary;
+
+    trip.chatHistory.push({
+      role: "user",
+      message
+    });
+
+    trip.chatHistory.push({
+      role: "assistant",
+      message: aiResponse
+    });
+
+    await trip.save();
+
+    res.json({
+      message: "Itinerary updated",
+      itinerary: trip.itinerary
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message
+    });
+
+  }
+};

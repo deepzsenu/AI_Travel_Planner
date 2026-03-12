@@ -4,31 +4,31 @@ import {
   createTrip,
   getUserTrips,
   getTripById,
-  updateTrip,
   deleteTrip,
-  generateItinerary,
+  addActivity,
+  removeActivity,
   regenerateDay,
-  tripChat
+  chatWithTrip 
 } from "../controllers/trip.controller.js";
 
-import { protect } from "../middleware/auth.middleware.js";
+import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/", protect, createTrip);
+router.post("/", authMiddleware, createTrip);
 
-router.get("/", protect, getUserTrips);
+router.get("/", authMiddleware, getUserTrips);
 
-router.get("/:id", protect, getTripById);
+router.get("/:id", authMiddleware, getTripById);
 
-router.put("/:id", protect, updateTrip);
+router.delete("/:id", authMiddleware, deleteTrip);
 
-router.delete("/:id", protect, deleteTrip);
+router.post("/:tripId/activity", authMiddleware, addActivity);
 
-router.post("/:id/generate-itinerary", protect, generateItinerary);
+router.delete("/:tripId/activity/:activityId", authMiddleware, removeActivity);
 
-router.post("/:id/regenerate-day", protect, regenerateDay);
+router.post("/:tripId/regenerate-day", authMiddleware, regenerateDay);
 
-router.post("/:id/chat", protect, tripChat);
+router.post("/:tripId/chat", authMiddleware, chatWithTrip);
 
 export default router;

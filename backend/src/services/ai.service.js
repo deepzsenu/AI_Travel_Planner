@@ -1,157 +1,167 @@
-import OpenAI from "openai";
+import axios from "axios";
 import { config } from "../config/env.js";
-import { safeJSONParse } from "../utils/aiValidator.js";
 
-const client = new OpenAI({
-  apiKey: config.openaiKey,
-  baseURL: "https://api.groq.com/openai/v1"
-});
+export const generateTripPlan = async (tripDetails) => {
 
-export const generateTravelPlan = async (trip) => {
+  const { source, destination, days, budgetType, interests } = tripDetails;
 
   const prompt = `
-You are a professional travel planner.
+You are an AI travel planner.
 
-Create a ${trip.days}-day travel itinerary for ${trip.destination}.
+Create a travel plan in JSON format.
 
-User Interests: ${trip.interests.join(", ")}
-Budget Type: ${trip.budgetType}
+Trip Details:
+Source: ${source}
+Destination: ${destination}
+Days: ${days}
+Budget: ${budgetType}
+Interests: ${interests.join(", ")}
 
-Return the response strictly in JSON format like this:
+Return JSON in this format ONLY:
 
 {
- "itinerary": [
-  {
-   "day": 1,
-   "activities": [
+  "itinerary":[
     {
-     "title": "Visit Senso-ji Temple",
-     "description": "Explore the famous historic temple",
-     "time": "Morning"
+      "day":1,
+      "activities":[
+        {
+          "title":"Place name",
+          "description":"short description",
+          "time":"Morning"
+        }
+      ]
     }
-   ]
-  }
- ],
-
- "estimatedBudget": {
-  "flights": number,
-  "accommodation": number,
-  "food": number,
-  "activities": number,
-  "total": number
- },
-
- "hotels": [
-  {
-   "name": "Hotel Example",
-   "type": "Budget"
-  }
- ]
+  ],
+  "estimatedBudget":{
+    "flights":0,
+    "accommodation":0,
+    "food":0,
+    "activities":0,
+    "total":0
+  },
+  "hotels":[
+    {
+      "name":"Hotel name",
+      "type":"Budget | Mid-range | Luxury"
+    }
+  ]
 }
 `;
 
-  const response = await client.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages: [
-      {
-        role: "user",
-        content: prompt
+  const response = await axios.post(
+    `${config.BASEURL}/chat/completions`,
+    {
+      model: config.MODEL,
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${config.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
       }
-    ],
-    temperature: 0.7
-  });
+    }
+  );
 
-  const content = response.choices[0].message.content;
+  const content = response.data.choices[0].message.content;
 
-  return JSON.parse(content);
+  return content;
 };
 
-export const regenerateTripDay = async (trip, day, instruction) => {
+export const regenerateDayPlan = async ({ destination, day, interests }) => {
 
   const prompt = `
-You are a professional travel planner.
+Generate travel activities for Day ${day} in ${destination}.
 
-Current trip destination: ${trip.destination}
-Trip duration: ${trip.days} days
-User interests: ${trip.interests.join(", ")}
+Interests: ${interests.join(", ")}
 
-Current itinerary:
-${JSON.stringify(trip.itinerary)}
-
-Modify ONLY day ${day}.
-
-Instruction:
-${instruction}
-
-Return ONLY JSON in this format:
+Return JSON:
 
 {
- "day": ${day},
- "activities": [
-   {
-     "title": "Activity name",
-     "description": "Short description",
-     "time": "Morning/Afternoon/Evening"
-   }
- ]
+  "day": ${day},
+  "activities":[
+    {
+      "title":"Activity name",
+      "description":"short description",
+      "time":"Morning"
+    }
+  ]
 }
 `;
 
-  const response = await client.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages: [
-      {
-        role: "user",
-        content: prompt
+  const response = await axios.post(
+    `${config.BASEURL}/chat/completions`,
+    {
+      model: config.MODEL,
+      messages: [
+        { role: "user", content: prompt }
+      ]
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${config.OPENAI_API_KEY}`
       }
-    ],
-    temperature: 0.7
-  });
-
-  const content = response.choices[0].message.content;
-
-  const parsed = safeJSONParse(content);
-
-    if (!parsed) {
-    throw new Error("Invalid AI JSON response");
     }
+  );
 
-    return parsed;
-
+  return response.data.choices[0].message.content;
 };
 
+export const chatWithTripAI = async ({ trip, message }) => {
 
-export const tripChatAssistant = async (trip, question) => {
-
-  const history = trip.chatHistory.map(msg => ({
-    role: msg.role,
-    content: msg.message
-  }));
-
-  const systemPrompt = `
+  const prompt = `
 You are an AI travel assistant.
 
-Destination: ${trip.destination}
-Trip duration: ${trip.days} days
+The user already has this travel itinerary:
 
-Current itinerary:
 ${JSON.stringify(trip.itinerary)}
 
-Answer user questions about this trip.
-Give helpful travel advice.
+User request:
+"${message}"
+
+Modify the itinerary according to the request.
+
+Return JSON ONLY in this format:
+
+{
+  "itinerary":[
+    {
+      "day":1,
+      "activities":[
+        {
+          "title":"Activity name",
+          "description":"short description",
+          "time":"Morning"
+        }
+      ]
+    }
+  ]
+}
 `;
 
-  const messages = [
-    { role: "system", content: systemPrompt },
-    ...history,
-    { role: "user", content: question }
-  ];
+  const response = await axios.post(
+    `${config.BASEURL}/chat/completions`,
+    {
+      model: config.MODEL,
+      messages: [
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${config.OPENAI_API_KEY}`
+      }
+    }
+  );
 
-  const response = await client.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    messages,
-    temperature: 0.7
-  });
-
-  return response.choices[0].message.content;
+  return response.data.choices[0].message.content;
 };

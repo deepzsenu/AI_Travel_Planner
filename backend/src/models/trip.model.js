@@ -32,6 +32,11 @@ const tripSchema = new mongoose.Schema(
       required: true
     },
 
+    sorce:{
+      type: String, 
+      require: true
+
+    },
     destination: {
       type: String,
       required: true

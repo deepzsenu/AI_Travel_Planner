@@ -1,8 +1,56 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import CreateTrip from "./pages/CreateTrip";
+import TripDetails from "./pages/TripDetails";
+
+import Layout from "./components/Layout";
+
 function App() {
+
   return (
-    <div className="flex items-center justify-center h-screen text-5xl font-bold text-blue-600">
-      AI Travel Planner
-    </div>
+
+    <BrowserRouter>
+
+      <Routes>
+
+        <Route path="/" element={<Login />} />
+
+        <Route path="/register" element={<Register />} />
+
+        <Route
+          path="/dashboard"
+          element={
+            <Layout>
+              <Dashboard />
+            </Layout>
+          }
+        />
+
+        <Route
+          path="/create-trip"
+          element={
+            <Layout>
+              <CreateTrip />
+            </Layout>
+          }
+        />
+
+        <Route
+          path="/trip/:id"
+          element={
+            <Layout>
+              <TripDetails />
+            </Layout>
+          }
+        />
+
+      </Routes>
+
+    </BrowserRouter>
+
   );
 }
 

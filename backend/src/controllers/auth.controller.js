@@ -1,12 +1,10 @@
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
 import User from "../models/user.model.js";
-import { generateToken } from "../utils/token.util.js";
+import { config } from "../config/env.js";
 
-/*
-REGISTER USER
-*/
-export const registerUser = async (req, res) => {
-
+export const register = async (req, res) => {
   try {
 
     const { name, email, password } = req.body;
@@ -14,9 +12,7 @@ export const registerUser = async (req, res) => {
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists"
-      });
+      return res.status(400).json({ message: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -27,34 +23,21 @@ export const registerUser = async (req, res) => {
       password: hashedPassword
     });
 
-    const token = generateToken(user._id);
-
     res.status(201).json({
+      message: "User registered successfully",
       user: {
         id: user._id,
         name: user.name,
         email: user.email
-      },
-      token
+      }
     });
 
   } catch (error) {
-
-    res.status(500).json({
-      message: "Server error",
-      error: error.message
-    });
-
+    res.status(500).json({ message: error.message });
   }
-
 };
 
-
-
-/*
-LOGIN USER
-*/
-export const loginUser = async (req, res) => {
+export const login = async (req, res) => {
 
   try {
 
@@ -63,40 +46,27 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({
-        message: "Invalid credentials"
-      });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({
-        message: "Invalid credentials"
-      });
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id);
+    const token = jwt.sign(
+      { id: user._id },
+      config.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.json({
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      },
+      message: "Login successful",
       token
     });
 
-  } 
-    catch (error) {
-
-    console.error("LOGIN ERROR:", error);
-
-    res.status(500).json({
-        message: "Server error",
-        error: error.message
-    });
-
-    }
-
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };

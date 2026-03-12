@@ -19,6 +19,7 @@ function TripDetails() {
     }
   ]);
 
+
   useEffect(() => {
 
     const fetchTrip = async () => {
@@ -35,11 +36,20 @@ function TripDetails() {
 
   const regenerateDay = async (day) => {
 
-    await API.post(`/trips/${id}/regenerate-day`, { day });
+    try {
 
-    const res = await API.get(`/trips/${id}`);
+      await API.post(`/trips/${id}/regenerate`, { day });
 
-    setTrip(res.data);
+      const res = await API.get(`/trips/${id}`);
+
+      setTrip(res.data);
+
+    } catch (err) {
+
+      console.error(err);
+      alert("Failed to regenerate day");
+
+    }
 
   };
 
@@ -65,7 +75,7 @@ function TripDetails() {
   };
 
   // Chat assistant state
-  
+
 
   const sendChatMessage = async () => {
 
@@ -115,6 +125,8 @@ User question: ${question}
     }
 
   };
+
+
   return (
 
     <div>
@@ -329,8 +341,8 @@ User question: ${question}
               <div
                 key={i}
                 className={`p-2 rounded text-sm max-w-[80%] ${msg.role === "user"
-                    ? "bg-blue-100 ml-auto text-right"
-                    : "bg-gray-100"
+                  ? "bg-blue-100 ml-auto text-right"
+                  : "bg-gray-100"
                   }`}
               >
                 {msg.content}

@@ -1,5 +1,4 @@
 import express from "express";
-
 import {
   createTrip,
   getUserTrips,
@@ -8,7 +7,7 @@ import {
   addActivity,
   removeActivity,
   regenerateDay,
-  chatWithTrip 
+  chatWithTrip
 } from "../controllers/trip.controller.js";
 
 import authMiddleware from "../middleware/auth.middleware.js";
@@ -16,19 +15,16 @@ import authMiddleware from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 router.post("/", authMiddleware, createTrip);
-
 router.get("/", authMiddleware, getUserTrips);
-
 router.get("/:id", authMiddleware, getTripById);
-
 router.delete("/:id", authMiddleware, deleteTrip);
 
 router.post("/:tripId/activity", authMiddleware, addActivity);
-
 router.delete("/:tripId/activity/:activityId", authMiddleware, removeActivity);
 
-router.post("/:tripId/regenerate-day", authMiddleware, regenerateDay);
+router.post("/:tripId/regenerate", authMiddleware, regenerateDay);
 
-router.post("/:tripId/chat", authMiddleware, chatWithTrip);
+// CHAT ROUTE
+router.post("/:id/chat", authMiddleware, chatWithTrip);
 
 export default router;

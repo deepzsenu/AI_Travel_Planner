@@ -1,24 +1,74 @@
 body{
-font-family: Arial;
-background:#f4f4f4;
+  font-family: Arial, sans-serif;
+  margin:0;
+  padding:0;
+
+  /* Hero background */
+  background-image: url("../assets/hero.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
+/* Trip Card */
 .trip-card{
-background:white;
-padding:20px;
-margin:10px;
-border-radius:8px;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+    url("../assets/tripcard.jpg");
+
+  background-size: cover;
+  background-position: center;
+
+  color:white;
+  padding:25px;
+  margin:20px;
+  border-radius:12px;
+
+  box-shadow:0 8px 25px rgba(0,0,0,0.3);
+  backdrop-filter: blur(6px);
+
+  transition: transform 0.3s ease;
 }
 
+.trip-card:hover{
+  transform: translateY(-5px);
+}
+
+/* Activity Card */
 .activity-card{
-background:white;
-padding:10px;
-margin:10px 0;
-border-radius:6px;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)),
+    url("../assets/activity.jpg");
+
+  background-size: cover;
+  background-position:center;
+
+  padding:15px;
+  margin:12px 0;
+  border-radius:10px;
+
+  box-shadow:0 4px 15px rgba(0,0,0,0.15);
+
+  transition: all 0.3s ease;
 }
 
+.activity-card:hover{
+  transform: scale(1.02);
+}
+
+/* Chat Panel */
 .chat-panel{
-background:white;
-padding:15px;
-margin-top:20px;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.92), rgba(255,255,255,0.92)),
+    url("../assets/chat.jpg");
+
+  background-size:cover;
+  background-position:center;
+
+  padding:20px;
+  margin-top:25px;
+
+  border-radius:12px;
+
+  box-shadow:0 6px 20px rgba(0,0,0,0.2);
 }

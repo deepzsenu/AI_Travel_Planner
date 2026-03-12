@@ -1,6 +1,7 @@
 import { useState } from "react";
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
+import hero from "../assets/hero.jpg";
 
 function CreateTrip() {
 
@@ -43,7 +44,7 @@ function CreateTrip() {
 
   return (
 
-    <div className="max-w-xl mx-auto mt-12 bg-white p-8 rounded-xl shadow-lg">
+    <div className="max-w-xl mx-auto mt-12 bg-white p-8 rounded-xl shadow-lg" style={{ backgroundImage: `url(${hero})` }}>
 
       <h2 className="text-2xl font-bold mb-6 text-center">
         Create Your AI Trip ✈️

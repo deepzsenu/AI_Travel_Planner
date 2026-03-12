@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
-import TripChat from "../components/TripChat";
-import ChatPanel from "../components/ChatPanel";
-
+// import TripChat from "../components/TripChat";
+// import ChatPanel from "../components/ChatPanel";
+import EstimatedBudget from "../components/EstimatedBudget";
 function TripDetails() {
 
   const { id } = useParams();
@@ -151,7 +151,7 @@ User question: ${question}
       </h2>
       {/* BUDGET SECTION */}
 
-      <h3 className="text-2xl font-bold mb-4">
+      {/* <h3 className="text-2xl font-bold mb-4">
         Estimated Budget
       </h3>
 
@@ -234,7 +234,9 @@ User question: ${question}
 
         </div>
 
-      </div>
+      </div> */}
+
+      <EstimatedBudget budget={trip.estimatedBudget} />
 
       {/* ITINERARY */}
 
@@ -242,42 +244,62 @@ User question: ${question}
 
         <div
           key={day.day}
-          className="bg-white p-6 rounded-lg shadow mb-6"
+          className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100 hover:shadow-xl transition"
         >
 
-          <div className="flex justify-between">
+          {/* Day Header */}
 
-            <h3 className="text-xl font-bold">
+          <div className="flex items-center justify-between mb-5">
+
+            <h3 className="text-2xl font-bold text-gray-800">
               Day {day.day}
             </h3>
 
             <button
               onClick={() => regenerateDay(day.day)}
-              className="text-sm bg-blue-600 text-white px-3 py-1 rounded"
+              className="bg-blue-600 text-white px-4 py-2 text-sm rounded-full hover:bg-blue-700 transition shadow"
             >
-              Regenerate
+              🔄 Regenerate
             </button>
 
           </div>
 
-          <div className="mt-4 space-y-2">
+
+          {/* Activities */}
+
+          <div className="space-y-4">
 
             {day.activities.map((activity, i) => (
 
               <div
                 key={i}
-                className="p-3 border rounded hover:bg-gray-50"
+                className="flex gap-4 p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition"
               >
 
-                <p className="font-semibold">
-                  {activity.time}
-                </p>
+                {/* Time Badge */}
 
-                <p>{activity.title}</p>
+                <div className="min-w-[70px] text-center">
 
-                <p className="text-gray-500 text-sm">
-                  {activity.description}
-                </p>
+                  <div className="bg-blue-100 text-blue-700 font-semibold px-3 py-1 rounded-lg text-sm">
+                    {activity.time}
+                  </div>
+
+                </div>
+
+
+                {/* Activity Info */}
+
+                <div className="flex-1">
+
+                  <p className="font-semibold text-gray-800 text-lg">
+                    {activity.title}
+                  </p>
+
+                  <p className="text-gray-500 text-sm mt-1">
+                    {activity.description}
+                  </p>
+
+                </div>
 
               </div>
 

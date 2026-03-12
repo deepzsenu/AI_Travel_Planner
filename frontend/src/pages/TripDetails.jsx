@@ -95,15 +95,30 @@ function TripDetails() {
 
       const res = await API.post(`/trips/${id}/chat`, {
         message: `
-You are a travel assistant helping with a specific trip.
+You are a helpful travel assistant for a user's trip.
 
-IMPORTANT:
-Only answer questions about the trip.
-Explain itinerary, budget, activities, and destination.
-Do NOT modify the itinerary.
+Trip destination: ${trip.destination}
+
+You can answer questions about:
+- itinerary
+- hotels
+- attractions
+- restaurants
+- nearby places
+- travel tips
+- activities
+- transportation
+- budget
+
+IMPORTANT RULES:
+- Do NOT modify the itinerary
+- Only answer questions
+- You CAN suggest places near the destination
+- Keep answers short and useful
 
 User question: ${question}
 `
+
       });
 
       const aiReply = {
@@ -378,7 +393,7 @@ User question: ${question}
         </div>
 
       )}
-
+      {/* <TripChat {} /> */}
     </div>
 
   );
